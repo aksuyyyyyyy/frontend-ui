@@ -1,25 +1,207 @@
-import logo from './logo.svg';
-import './App.css';
+import React from "react";
 
-function App() {
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+
+import {
+  AnimatePresence,
+  motion,
+} from "framer-motion";
+
+import LandingPage from "./pages/LandingPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import Dashboard from "./pages/Dashboard";
+
+/* PAGE TRANSITION */
+
+function PageWrapper({ children }) {
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+
+    <motion.div
+
+      initial={{
+        opacity: 0,
+        y: 10,
+      }}
+
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+
+      exit={{
+        opacity: 0,
+        y: -10,
+      }}
+
+      transition={{
+        duration: 0.35,
+      }}
+
+      style={{
+        width: "100%",
+        height: "100%",
+      }}
+    >
+
+      {children}
+
+    </motion.div>
   );
 }
 
-export default App;
+/* CHECK AUTH */
+
+function isAuthenticated() {
+
+  return !!localStorage.getItem(
+    "auth_user"
+  );
+}
+
+/* PRIVATE ROUTE */
+
+function PrivateRoute({ children }) {
+
+  return isAuthenticated()
+    ? children
+    : (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
+}
+
+/* PUBLIC ROUTE */
+
+function PublicRoute({ children }) {
+
+  return isAuthenticated()
+    ? (
+      <Navigate
+        to="/dashboard"
+        replace
+      />
+    )
+    : children;
+}
+
+/* ROUTES */
+
+function AnimatedRoutes() {
+
+  const location =
+    useLocation();
+
+  return (
+
+    <AnimatePresence mode="wait">
+
+      <Routes
+        location={location}
+        key={location.pathname}
+      >
+
+        {/* LANDING */}
+
+        <Route
+          path="/"
+          element={
+            <PageWrapper>
+
+              <LandingPage />
+
+            </PageWrapper>
+          }
+        />
+
+        {/* LOGIN */}
+
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+
+              <PageWrapper>
+
+                <LoginPage />
+
+              </PageWrapper>
+
+            </PublicRoute>
+          }
+        />
+
+        {/* REGISTER */}
+
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+
+              <PageWrapper>
+
+                <RegisterPage />
+
+              </PageWrapper>
+
+            </PublicRoute>
+          }
+        />
+
+        {/* DASHBOARD */}
+
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+
+              <PageWrapper>
+
+                <Dashboard />
+
+              </PageWrapper>
+
+            </PrivateRoute>
+          }
+        />
+
+        {/* FALLBACK */}
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/"
+              replace
+            />
+          }
+        />
+
+      </Routes>
+
+    </AnimatePresence>
+  );
+}
+
+/* APP */
+
+export default function App() {
+
+  return (
+
+    <Router>
+
+      <AnimatedRoutes />
+
+    </Router>
+  );
+}
